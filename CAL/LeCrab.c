@@ -16,20 +16,14 @@ RED   = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
- 
-
-
-
 
 def loadImage(img):
     img = pygame.image.load(img)
     img.set_colorkey(img.get_at((0,0)))
     return img
 
-
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
-
 
 class Element(pygame.sprite.Sprite):
     def __init__(self, img = None):
@@ -40,28 +34,20 @@ class Element(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect.center=(16,16)
 
-
     def setPos(self, x, y):
         self.rect.center = (x, y)
 
-
     def getRect(self):
         return self.rect
-
 
     def draw(self, surface):
         if(self.image != None):
             surface.blit(self.image, self.rect)
 
-
     def move(self):
         pass
     def update(self):
         pass
-
-
-
-
  
 class Enemy(Element):
     def __init__(self, img="crab.png"):
@@ -73,12 +59,10 @@ class Enemy(Element):
         self.destNode = (1,1)
         self.lastNode = (1,1)
 
-
         self.speed = random.randint(2,4) #pixels per frame
        
     def getNodePos(self):
         return self.lastNode
-
 
     def isSafeNode(self, x, y):
         if x < 0 or x >= len(MAP):
@@ -93,63 +77,58 @@ class Enemy(Element):
         self.lastNode = (x,y)
         self.destNode = (x,y)
         self.setPos(x*self.rect[2], y*self.rect[3])
-       
 
     def nextNode(self):
+        # [direita, esquerda, baixo, cima]
+        prioridade = [False, False, False, False]
        
-        prioridade = [0,0] #[direita, esquerda, baixo, cima]
-        if self.lastNode[0] < P1.lastNode[0]:                                   #player a direita do inimigo
-            prioridade[0] = 0
-        elif self.lastNode[0] > P1.lastNode[0]:                                 #player a esquerda do inimigo
-            prioridade[0] = 1
-
-        if self.lastNode[1] < P1.lastNode[1]:                                   #player embaixo do inimigo
-            prioridade[1] = 0
-        elif self.lastNode[1] > P1.lastNode[1]:                                 #player acima do inimigo
-            prioridade[1] = 1
-
-        print(prioridade)
-        
-        if(prioridade[1] == 1): #cima
-            if(self.isSafeNode(self.lastNode[0], self.lastNode[1]-1)):
-                return (self.lastNode[0], self.lastNode[1]-1)
-        if(prioridade[1] == 0): #baixo
-            if(self.isSafeNode(self.lastNode[0], self.lastNode[1]+1)):
-                return (self.lastNode[0], self.lastNode[1]+1)
-        if(prioridade[0] == 1): #esquerda
-            if(self.isSafeNode(self.lastNode[0]-1, self.lastNode[1])):
-                return (self.lastNode[0]-1, self.lastNode[1])
-        if(prioridade[0] == 0): #direita
-            if(self.isSafeNode(self.lastNode[0]+1, self.lastNode[1])):
-                return (self.lastNode[0]+1, self.lastNode[1])
+        # Define as prioridades baseadas na posição do player
+        if self.lastNode[0] < P1.lastNode[0]:   #direita                                  
+            prioridade[0] = True
+        elif self.lastNode[0] > P1.lastNode[0]: #esquerda                              
+            prioridade[1] = True
            
+        if self.lastNode[1] < P1.lastNode[1]:   #baixo                                
+            prioridade[2] = True
+        elif self.lastNode[1] > P1.lastNode[1]: #cima                            
+            prioridade[3] = True
 
-        if(self.isSafeNode(self.lastNode[0], self.lastNode[1]-1)): #cima
+        # Tenta seguir as prioridades
+        if prioridade[0]: #direita
+            if self.isSafeNode(self.lastNode[0]+1, self.lastNode[1]):
+                return (self.lastNode[0]+1, self.lastNode[1])
+        if prioridade[3]: #cima
+            if self.isSafeNode(self.lastNode[0], self.lastNode[1]-1):
+                return (self.lastNode[0], self.lastNode[1]-1)
+        if prioridade[2]: #baixo
+            if self.isSafeNode(self.lastNode[0], self.lastNode[1]+1):
+                return (self.lastNode[0], self.lastNode[1]+1)
+        if prioridade[1]: #esqjerda
+            if self.isSafeNode(self.lastNode[0]-1, self.lastNode[1]):
+                return (self.lastNode[0]-1, self.lastNode[1])
+           
+        # Plano B: Tenta qualquer direção livre se estiver bloqueado na direção preferida
+        if self.isSafeNode(self.lastNode[0], self.lastNode[1]-1): #cima
             return (self.lastNode[0], self.lastNode[1]-1)
-        if(self.isSafeNode(self.lastNode[0], self.lastNode[1]+1)): #baixo
+        if self.isSafeNode(self.lastNode[0], self.lastNode[1]+1): #baixo
             return (self.lastNode[0], self.lastNode[1]+1)
-        if(self.isSafeNode(self.lastNode[0]-1, self.lastNode[1])): #esquerda
-            return (self.lastNode[0]-1, self.lastNode[1])
-        if(self.isSafeNode(self.lastNode[0]+1, self.lastNode[1])): #direita
+        if self.isSafeNode(self.lastNode[0]+1, self.lastNode[1]): #direita
             return (self.lastNode[0]+1, self.lastNode[1])  
-        
-       
-       
-       
+        if self.isSafeNode(self.lastNode[0]-1, self.lastNode[1]): #esquerda
+            return (self.lastNode[0]-1, self.lastNode[1])
+           
+        return None
+ 
     def update(self):
            
         mx = 0
         my = 0  
-
 
         if(self.destNode != None):
             d = self.destNode[0]*32 - self.rect.center[0]
             mx = d
             d = self.destNode[1]*32 - self.rect.center[1]
             my = d
-
-
-
 
         if(mx == 0 and my == 0):
             self.destNode = self.nextNode()
@@ -158,16 +137,10 @@ class Enemy(Element):
             else:
                 self.lastNode = self.destNode
 
-
         mx = clamp(mx, -self.speed, self.speed)
         my = clamp(my, -self.speed, self.speed)
 
-
-
-
         self.rect.move_ip(mx,my)    
-       
-       
    
 class Player(Enemy):
     def __init__(self):
@@ -175,7 +148,6 @@ class Player(Enemy):
         self.direction = "UP"
         self.newDir = None
         self.speed = 3
-
 
     def nextNode(self):
         if(self.newDir != None):
@@ -215,7 +187,6 @@ class Player(Enemy):
            
         return None
 
-
     def update(self):
         pressed_keys = pygame.key.get_pressed()
         if pressed_keys[K_UP]:
@@ -228,36 +199,27 @@ class Player(Enemy):
             self.newDir = "RIGHT"
 
 
-        super().update()
- 
 
+
+        super().update()
 
 class Obstacle(Element):
     def __init__(self, img):
         super().__init__(img)
         self.setPos(400,300)
 
-
-
-
-   
-
-
 enemies = []
 N_ENEMIES = 10
 for i in range(N_ENEMIES):
     enemies.append(Enemy())
 
-
 mapFromAscii = False #para mapas feitos em https://textik.com/
-
 
 MAP = []
 f = open("map_0.txt")
 lines = f.readlines()
 if('+' in lines[0]):
     mapFromAscii = True
-
 
 for line in lines:
     if mapFromAscii:    
@@ -273,18 +235,14 @@ for line in lines:
     if(len(row) > 3):
         MAP.append(list(row))
 
-
 #transposta, para acessar no modelo MAP[x][y]
 MAP = [[row[i] for row in MAP] for i in range(len(MAP[0]))]
-   
-
 
 px = len(MAP) -2
 py = len(MAP[0])-2
 P1 = Player()
 P1.setNode(px, py)
 MAP[px][py] = 0
-
 
 # Screen information
 SCREEN_WIDTH = len(MAP) * 32 - 32
@@ -293,7 +251,6 @@ SCREEN_HEIGHT = len(MAP[0]) * 32 - 32
 DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 DISPLAYSURF.fill(WHITE)
 pygame.display.set_caption("Crab")
-
 
 background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 backImg = pygame.image.load("sand.png")
@@ -307,10 +264,6 @@ while w < SCREEN_WIDTH:
         h = h + backRect[3]
     w = w + backRect[2]
     h = 0
-
-
-
-
 
 
 obstacles = []
@@ -327,17 +280,10 @@ while i < len(MAP):
     i = i + 1
     j=0
 
-
-
-
-
-
 elements = [P1] + enemies + obstacles
-
 
 pygame.mixer.music.load("sound.mp3")
 pygame.mixer.music.play(-1)
-
 
 while True:  
     for event in pygame.event.get():              
@@ -350,11 +296,8 @@ while True:
      
     DISPLAYSURF.blit(background, (0,0))
 
-
     for e in elements:
         e.draw(DISPLAYSURF)
-
-
        
     l = P1.getRect().collidelistall(enemies)
     if(len(l) > 0):
@@ -363,6 +306,5 @@ while True:
         for i in range(N_ENEMIES):
             enemies[i].setNode(1,1)
    
-         
     pygame.display.update()
     FramePerSec.tick(FPS)
