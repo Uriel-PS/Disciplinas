@@ -1,3 +1,4 @@
+//cd C:/Users/13875039955/Desktop/cgr
 //gcc koguima.c -o koguima.exe -lopengl32 -lglu32 -lfreeglut
 #include <GL/glut.h>
 #include <math.h>
